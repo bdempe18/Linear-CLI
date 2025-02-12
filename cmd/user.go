@@ -11,6 +11,8 @@ import (
 	"github.com/machinebox/graphql"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"linear/write"
 )
 
 // userCmd represents the user command
@@ -52,7 +54,7 @@ func printUserInfo() {
 	apiKey := viper.GetString("API_KEY")
 
 	if apiKey == "" {
-		fmt.Println("Error. Linear API Key not set")
+		write.Std.Error("Error. Linear API KEy not set")
 		os.Exit(1)
 	}
 
@@ -82,8 +84,8 @@ func printUserInfo() {
 	request.Header.Set("Authorization", apiKey)
 	var response UserResponse
 	if err := client.Run(context.Background(), request, &response); err != nil {
-		fmt.Printf("Error making request: %v", err)
-		return
+		// TODO need Successf
+		write.Std.Error("Error making request")
 	}
 
 	viewer := response.Viewer

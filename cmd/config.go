@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"linear/write"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,6 +37,18 @@ var configCmd = &cobra.Command{
 			return
 		}
 	},
+}
+
+func GetApiKey() string {
+	apiKey := viper.GetString("api_key")
+
+	if apiKey == "" {
+		write.Std.Error("Linear Api Key not found")
+		os.Exit(1)
+	}
+
+	return apiKey
+
 }
 
 func init() {

@@ -6,11 +6,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/machinebox/graphql"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"linear/write"
 )
@@ -51,12 +49,7 @@ type UserResponse struct {
 }
 
 func printUserInfo() {
-	apiKey := viper.GetString("API_KEY")
-
-	if apiKey == "" {
-		write.Std.Error("Error. Linear API KEy not set")
-		os.Exit(1)
-	}
+	apiKey := GetApiKey()
 
 	client := graphql.NewClient("https://api.linear.app/graphql")
 	request := graphql.NewRequest(`

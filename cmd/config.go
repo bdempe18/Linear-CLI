@@ -4,7 +4,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"linear/write"
+	"linear/internal"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -27,13 +27,13 @@ var configCmd = &cobra.Command{
 		validKeys := map[string]bool{"api_key": true, "ben": true}
 
 		if !validKeys[key] {
-			write.Std.Error("Invalid key")
+			internal.Std.Error("Invalid key")
 			return
 		}
 
 		viper.Set(key, value)
 		if err := viper.WriteConfig(); err != nil {
-			write.Std.Error("Error saving config")
+			internal.Std.Error("Error saving config")
 			return
 		}
 	},
@@ -43,7 +43,7 @@ func GetApiKey() string {
 	apiKey := viper.GetString("api_key")
 
 	if apiKey == "" {
-		write.Std.Error("Linear Api Key not found")
+		internal.Std.Error("Linear Api Key not found")
 		os.Exit(1)
 	}
 

@@ -6,7 +6,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"linear/write"
+	"linear/internal"
 	"strings"
 
 	"github.com/machinebox/graphql"
@@ -70,7 +70,7 @@ to quickly create a Cobra application.`,
 		request.Header.Set("Authorization", apiKey)
 		var response IssuesResponse
 		if err := client.Run(context.Background(), request, &response); err != nil {
-			write.Std.Error("Error making request")
+			internal.Std.Error("Error making request")
 		}
 
 		groupedIssues := make(map[string][]string)
@@ -89,11 +89,11 @@ to quickly create a Cobra application.`,
 				continue
 			}
 
-			write.Std.Success(state)
+			internal.Std.Success(state)
 			for _, title := range titles {
-				write.Std.Infof(" - %s\n", title)
+				internal.Std.Infof(" - %s\n", title)
 			}
-			write.Std.Info("\n")
+			internal.Std.Info("\n")
 		}
 		// for _, issue := range response.Cycles.Nodes.Issues.Nodes {
 		// write.Std.Info(issue.Title)

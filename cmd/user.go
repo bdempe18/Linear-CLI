@@ -6,11 +6,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"linear/internal"
 
 	"github.com/machinebox/graphql"
 	"github.com/spf13/cobra"
-
-	"linear/write"
 )
 
 // userCmd represents the user command
@@ -78,7 +77,7 @@ func printUserInfo() {
 	var response UserResponse
 	if err := client.Run(context.Background(), request, &response); err != nil {
 		// TODO need Successf
-		write.Std.Error("Error making request")
+		internal.Std.Error("Error making request")
 	}
 
 	viewer := response.Viewer

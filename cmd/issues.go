@@ -4,33 +4,62 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"linear/internal"
 	"strings"
 
-	"github.com/machinebox/graphql"
 	"github.com/spf13/cobra"
 )
 
 var stateFilter string
 
+type Status struct {
+	Name string `json:"name"`
+}
+
+type Issue struct {
+	ID     string `json:"id"`
+	Number int    `json:"number"`
+	Title  string `json:"title"`
+	State  Status `json:"state"`
+}
+
+type Cycle struct {
+	ID     string `json:"id"`
+	Issues struct {
+		Nodes []Issue `json:"nodes"`
+	} `json:"issues"`
+}
+
 type IssuesResponse struct {
 	Cycles struct {
-		Nodes []struct {
-			ID     string `json:"id"`
-			Issues struct {
-				Nodes []struct {
-					ID     string `json:"id"`
-					Number int    `json:"number"`
-					Title  string `json:"title"`
-					State  struct {
-						Name string `json:"name"`
-					} `json:"state"`
-				} `json:"nodes"`
-			} `json:"issues"`
-		} `json:"nodes"`
+		Nodes []Cycle `json:"nodes"`
 	} `json:"cycles"`
+}
+
+func (r IssuesResponse) Show() {
+	groupedIssues := make(map[string][]string)
+
+	for _, cycle := range r.Cycles.Nodes {
+		for _, issue := range cycle.Issues.Nodes {
+			state := issue.State.Name
+			fmtName := fmt.Sprintf("(#%d) %s", issue.Number, issue.Title)
+			groupedIssues[state] = append(groupedIssues[state], fmtName)
+		}
+	}
+
+	// TODO the filters should be a struct or slice argument
+	for state, titles := range groupedIssues {
+		if stateFilter != "" && !strings.EqualFold(state, stateFilter) {
+			continue
+		}
+
+		internal.Std.Success(state)
+		for _, title := range titles {
+			internal.Std.Infof(" - %s\n", title)
+		}
+		internal.Std.Info("\n")
+	}
 }
 
 // issuesCmd represents the issues command
@@ -44,65 +73,36 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// cycleString := getCycleQLFilter()
+
+		queryStructure := internal.GenNode("cycles",
+			internal.GenField("id"),
+			internal.GenNode("issues",
+				internal.GenField("id"),
+				internal.GenField("number"),
+				internal.GenField("title"),
+				internal.GenField("state",
+					internal.GenField("name"),
+				),
+			),
+		)
+
 		apiKey := GetApiKey()
-
-		client := graphql.NewClient("https://api.linear.app/graphql")
-		request := graphql.NewRequest(`
-			query {
-				cycles(first: 11) {
-					nodes {
-						id
-						issues {
-							nodes {
-								id
-								number
-								title
-								state {
-									name
-								}
-							}
-						}
-					}
-				}
-			}
-		`)
-
-		request.Header.Set("Authorization", apiKey)
 		var response IssuesResponse
-		if err := client.Run(context.Background(), request, &response); err != nil {
-			internal.Std.Error("Error making request")
+		err := internal.Request(&response, queryStructure, apiKey)
+
+		if err != nil {
+			internal.Std.Errorf("Request could not be completed: %v", err)
+			return
 		}
 
-		groupedIssues := make(map[string][]string)
-
-		for _, cycle := range response.Cycles.Nodes {
-			for _, issue := range cycle.Issues.Nodes {
-				state := issue.State.Name
-				fmtName := fmt.Sprintf("(#%d) %s", issue.Number, issue.Title)
-				groupedIssues[state] = append(groupedIssues[state], fmtName)
-
-			}
-		}
-
-		for state, titles := range groupedIssues {
-			if stateFilter != "" && !strings.EqualFold(state, stateFilter) {
-				continue
-			}
-
-			internal.Std.Success(state)
-			for _, title := range titles {
-				internal.Std.Infof(" - %s\n", title)
-			}
-			internal.Std.Info("\n")
-		}
-		// for _, issue := range response.Cycles.Nodes.Issues.Nodes {
-		// write.Std.Info(issue.Title)
-		// }
+		response.Show()
 	},
 }
 
 func init() {
 	issuesCmd.Flags().StringVarP(&stateFilter, "state", "s", "", "Filter issues by state")
+	// issuesCmd.Flags().StringVarP(&cycle, "cycle", "c", "", "Cycle number")
 	rootCmd.AddCommand(issuesCmd)
 
 	// Here you will define your flags and configuration settings.
